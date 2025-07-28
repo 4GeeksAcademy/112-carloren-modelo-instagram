@@ -1,13 +1,12 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import String, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
-from enum import Enum
-
+from sqlalchemy import String, ForeignKey, Enum
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+import enum
 
 db = SQLAlchemy()
 
 
-class Type(Enum):
+class Type(enum.Enum):
     IMAGE = 1
     VIDEO = 2
     AUDIO = 3
@@ -20,6 +19,7 @@ class User(db.Model):
     lastname: Mapped[str] = mapped_column(String(120))
     email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     password: Mapped[str] = mapped_column(nullable=False)
+    posts = relationship("Post", back_populates="user")
 
     def serialize(self):
         return {
@@ -46,7 +46,7 @@ class Follower(db.Model):
 
 class Media(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
-    type: Type = Enum("Type", [("IMAGE", 1), ("VIDEO", 2), ("AUDIO", 3)])
+    type: Mapped[Type] = mapped_column(Enum(Type), nullable=False)
     url: Mapped[str] = mapped_column(String(120))
     post_id: Mapped[int] = mapped_column(ForeignKey("post.id"))
 
@@ -62,6 +62,7 @@ class Media(db.Model):
 class Post(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
+    user = relationship("User", back_populates="posts")
 
     def serialize(self):
         return {
